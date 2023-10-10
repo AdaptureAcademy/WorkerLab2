@@ -69,22 +69,37 @@ will automatically rebuild your project.
 Modify the `src/index.js` file in your project to contain the following code for a basic redirection Worker:
 
 ```javascript
-async function handleRequest(request) {
-  const url = new URL(request.url);
-  const { pathname } = url;
+export default {
+  // The fetch handler is invoked when this worker receives a HTTP(S) request
+  // and should return a Response (optionally wrapped in a Promise)
+  async fetch(request) {
+    const url = new URL(request.url);
+    const { pathname } = url;
+    console.log("pathname", pathname);
+    try {
+      // If pathname start with /old-path, redirect to github repository
+      if (pathname.startsWith("/old-path")) {
+        // const newURL = url.toString().replace("/old-path", "/new-path");
+        const newURL = "https://github.com/AdaptureAcademy/WorkerLab2";
+        return Response.redirect(newURL, 301); // 301 is HTTP status code for "Moved Permanently"
+      } else {
+        const cleanURL = url.toString().replace("/new-path", "");
 
-  // Modify this to your redirection logic
-  if (pathname.startsWith('/old-path')) {
-    const newURL = url.toString().replace('/old-path', '/new-path');
-    return Response.redirect(newURL, 301);  // 301 is HTTP status code for "Moved Permanently"
-  }
-
-  return fetch(request);  // For other routes, proceed with the request as usual
-}
-
-addEventListener('fetch', event => {
-  event.respondWith(handleRequest(event.request));
-});
+        return new Response(
+          `Hello, try visiting <a href="${cleanURL}old-path" target='_blank'><b>this link</b></a>\n\n<hr />\n\n
+      You will be redirected to <a href="https://github.com/AdaptureAcademy/WorkerLab2">https://github.com/AdaptureAcademy/WorkerLab2</a>`,
+          {
+            headers: { "Content-Type": "text/html" },
+            status: 200,
+          },
+        );
+      }
+    } catch (e) {
+      // If anything goes wrong, return a Response with status 500
+      return new Response(e.message || e.toString(), { status: 500 });
+    }
+  },
+};
 ```
 
 In this code snippet:
@@ -101,7 +116,7 @@ Feel free to modify the code to suit your redirection logic.
 ## 4. Test Your Worker Locally
 
 With `wrangler dev` running, you can now test your Worker locally by navigating to `http://127.0.0.1:8787/old-path` in
-your browser. You should be redirected to `http://127.0.0.1:8787/new-path`.
+your browser. You should be redirected to this Github repository.
 
 ---
 
@@ -113,7 +128,8 @@ Deploy your Worker using the following command:
 npm run deploy
 ```
 
-Your Worker will be live at `<YOUR_WORKER>.<YOUR_SUBDOMAIN>.workers.dev`.
+Your Worker will be live at `<YOUR_WORKER>.<YOUR_SUBDOMAIN>.workers.dev`. When you have the link, try
+visiting `<YOUR_WORKER>.<YOUR_SUBDOMAIN>.workers.dev/old-path` to see it working in action on Cloudflare.
 
 ---
 

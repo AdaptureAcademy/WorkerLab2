@@ -13,22 +13,28 @@ export default {
   async fetch(request) {
     const url = new URL(request.url);
     const { pathname } = url;
+    console.log("pathname", pathname);
+    try {
+      // If pathname start with /old-path, redirect to github repository
+      if (pathname.startsWith("/old-path")) {
+        // const newURL = url.toString().replace("/old-path", "/new-path");
+        const newURL = "https://github.com/AdaptureAcademy/WorkerLab2";
+        return Response.redirect(newURL, 301); // 301 is HTTP status code for "Moved Permanently"
+      } else {
+        const cleanURL = url.toString().replace("/new-path", "");
 
-    // If pathname start with /old-path, redirect to /new-path
-    if (pathname.startsWith("/old-path")) {
-      const newURL = url.toString().replace("/old-path", "/new-path");
-      console.log(
-        `Redirecting from ${url + pathname} to ${newURL + "/new-path"}`,
-      );
-      return new Response.redirect(newURL, 301); // 301 is HTTP status code for "Moved Permanently"
+        return new Response(
+          `Hello, try visiting <a href="${cleanURL}old-path" target='_blank'><b>this link</b></a>\n\n<hr />\n\n
+      You will be redirected to <a href="https://github.com/AdaptureAcademy/WorkerLab2">https://github.com/AdaptureAcademy/WorkerLab2</a>`,
+          {
+            headers: { "Content-Type": "text/html" },
+            status: 200,
+          },
+        );
+      }
+    } catch (e) {
+      // If anything goes wrong, return a Response with status 500
+      return new Response(e.message || e.toString(), { status: 500 });
     }
-
-    return new Response(
-      `Hello, try visiting <a href="http://127.0.0.1:8787/old-path">http://127.0.0.1:8787/old-path</a>\n\n<hr />\n\n
-      You will be redirected back to <a href="http://127.0.0.1:8787/new-path">http://127.0.0.1:8787/new-path</a>`,
-      {
-        headers: { "Content-Type": "text/html" },
-      },
-    );
   },
 };
